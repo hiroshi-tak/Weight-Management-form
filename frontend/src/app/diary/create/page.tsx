@@ -1,29 +1,22 @@
 'use client';
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useState } from "react";
 import api from "@/lib/axios";
 import AuthGuard from '@/components/AuthGuard';
+import axios from "axios";
 
 export default function Home() {
     const [weight, setWeight] = useState("");
     const [memo, setMemo] = useState("");
-    const [currentDateTime, setCurrentDateTime] = useState("");
     const [bodyFat, setBodyFat] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
     const today = new Date();
 
-    const recordDate =
-    `${today.getFullYear()}-` +
-    `${String(today.getMonth() + 1).padStart(2, "0")}-` +
-    `${String(today.getDate()).padStart(2, "0")}`;
-
-    // クライアント側で日時取得
-    useEffect(() => {
-        setCurrentDateTime(
-            new Date().toLocaleString("ja-JP")
-        );
-    }, []);
+    const [recordDate, setRecordDate] = useState(
+        `${today.getFullYear()}-` +
+        `${String(today.getMonth() + 1).padStart(2, "0")}-` +
+        `${String(today.getDate()).padStart(2, "0")}`
+    );
 
     // 保存ボタン
     const handleSubmit = async (e: React.FormEvent) => {
@@ -53,22 +46,25 @@ export default function Home() {
             setBodyFat("");
             setMemo("");
 
-        } catch (error: any) {
-            console.error(error.response?.data);
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error)) {
 
-            const data = error.response?.data;
+                const data = error.response?.data;
 
-            if (data) {
-                const messages = Object.entries(data)
-                    .map(([field, msgs]) => {
-                        if (Array.isArray(msgs)) {
-                            return msgs.join("\n");
-                        }
-                        return String(msgs);
-                    })
-                    .join("\n");
+                if (data) {
+                    const messages = Object.entries(data)
+                        .map(([, msgs]) => {
+                            if (Array.isArray(msgs)) {
+                                return msgs.join("\n");
+                            }
+                            return String(msgs);
+                        })
+                        .join("\n");
 
-                setErrorMessage(messages);
+                    setErrorMessage(messages);
+                } else {
+                    setErrorMessage("更新に失敗しました");
+                }
             } else {
                 setErrorMessage("更新に失敗しました");
             }
@@ -81,9 +77,18 @@ export default function Home() {
 
             <h1 className="text-2xl font-bold mb-4">体重を記載</h1>
 
-            <p className="mb-6">{currentDateTime}</p>
-
             <form onSubmit={handleSubmit}>
+                <div className="mb-4">
+                    <input
+                        type="date"
+                            value={recordDate}
+                        onChange={(e) =>
+                            setRecordDate(e.target.value)
+                        }
+                        className="border rounded p-2"
+                    />
+                </div>
+
                 <div className="mb-4">
                     <input
                         type="number"

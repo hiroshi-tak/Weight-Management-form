@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
 import AuthGuard from '@/components/AuthGuard';
+import axios from "axios";
 
 export default function HeightCreatePage() {
     const router = useRouter();
@@ -50,22 +50,24 @@ export default function HeightCreatePage() {
             alert("保存しました");
             router.push("/");
 
-        } catch (error: any) {
-            console.error(error.response?.data);
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error)) {
+                const data = error.response?.data;
 
-            const data = error.response?.data;
+                if (data) {
+                    const messages = Object.entries(data)
+                        .map(([, msgs]) => {
+                            if (Array.isArray(msgs)) {
+                                return msgs.join("\n");
+                            }
+                            return String(msgs);
+                        })
+                        .join("\n");
 
-            if (data) {
-                const messages = Object.entries(data)
-                    .map(([field, msgs]) => {
-                        if (Array.isArray(msgs)) {
-                            return msgs.join("\n");
-                        }
-                        return String(msgs);
-                    })
-                    .join("\n");
-
-                setErrorMessage(messages);
+                    setErrorMessage(messages);
+                } else {
+                    setErrorMessage("更新に失敗しました");
+                }
             } else {
                 setErrorMessage("更新に失敗しました");
             }
@@ -75,15 +77,6 @@ export default function HeightCreatePage() {
     return (
         <AuthGuard>
         <div className="max-w-2xl mx-auto p-4">
-
-            <div className="mb-6">
-                <Link
-                href="/"
-                className="text-blue-600 underline"
-                >
-                トップページに戻る
-                </Link>
-            </div>
 
             <h1 className="text-2xl font-bold mb-4">身長を記載</h1>
 

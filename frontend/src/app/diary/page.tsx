@@ -21,30 +21,32 @@ export default function WeightListPage() {
     const [targetWeight, setTargetWeight] = useState<number | null>(null);
     const [height, setHeight] = useState<number | null>(null);
 
-    const getWeightRecords = async () => {
-        try {
-            const response = await api.get(
-                `/api/diary/?year=${year}&month=${month}`
-            );
-
-            setWeightRecords(response.data);
-
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
     useEffect(() => {
-        getWeightRecords();
+        const fetchData = async () => {
+            try {
+                const response = await api.get(
+                    `/api/diary/?year=${year}&month=${month}`
+                );
+
+                setWeightRecords(response.data);
+
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        fetchData();
     }, [year, month]);
 
     const deleteWeightRecord = async (id: string) => {
         try {
-            await api.delete(
-                `/api/diary/${id}/`
-            );
+            await api.delete(`/api/diary/${id}/`);
 
-            getWeightRecords();
+            setWeightRecords(
+                weightRecords.filter(
+                    (record) => record.id !== id
+                )
+            );
         } catch (error) {
             console.error(error);
         }
@@ -74,15 +76,30 @@ export default function WeightListPage() {
         body_fat: Number(item.body_fat),
     }));
 
-    const fetchLatestHeight = async () => {
-        const res = await api.get("/api/height-monthly/latest/");
-
-        setHeight(Number(res.data.height_cm));
-        setTargetWeight(Number(res.data.target_weight));
-    };
-
     useEffect(() => {
-        fetchLatestHeight();
+
+        const fetchData = async () => {
+
+            try {
+                const response = await api.get(
+                    "/api/height-monthly/latest/"
+                );
+
+                setTargetWeight(
+                    response.data.target_weight
+                );
+
+                setHeight(
+                    response.data.height_cm
+                );
+
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        fetchData();
+
     }, []);
 
     const latestWeight =

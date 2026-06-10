@@ -1,10 +1,8 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import api from "@/lib/axios";
 import AuthGuard from '@/components/AuthGuard';
-//import { getMonthlyAverages } from "@/lib/diary/stats";
 
 import {
     ResponsiveContainer,
@@ -16,45 +14,35 @@ import {
     Tooltip,
 } from "recharts";
 
-type WeightRecordType = {
-    id: string;
-    weight: number;
-    body_fat: number;
-    memo: string;
-    record_date: string;
-};
-
 type MonthlyDataType = {
     month: number;
     avg: number;
 };
 
 export default function WeightListPage() {
-    const [weightRecords, setWeightRecords] =
-        useState<WeightRecordType[]>([]);
-
     const [year, setYear] = useState(
         new Date().getFullYear()
     );
 
     const [monthlyData, setMonthlyData] = useState<MonthlyDataType[]>([]);
 
-    const getMonthlyData = async () => {
-        try {
-            const res = await api.get(
-                `/api/diary/monthly-averages/?year=${year}`
-            );
-
-            setMonthlyData(res.data);
-
-        } catch (error) {
-            console.error(error);
-        }
-    };
-    
     useEffect(() => {
         if (!year) return;
-        getMonthlyData();
+
+        const fetchData = async () => {
+            try {
+                const res = await api.get(
+                    `/api/diary/monthly-averages/?year=${year}`
+                );
+
+                setMonthlyData(res.data);
+
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        fetchData();
     }, [year]);
 
     const prevYear = () => {

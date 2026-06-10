@@ -40,7 +40,7 @@ export default function AuthGuard({
         };
 
         checkAuth();
-    }, []);
+    }, [router]);
 
     if (isAuthenticated === null) {
         return <div>Loading...</div>;
