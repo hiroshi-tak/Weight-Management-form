@@ -134,7 +134,7 @@ export default function WeightListPage() {
             <div className="w-full">
                 <WeightChart
                     data={chartData}
-                    targetWeight={targetWeight}
+                    targetWeight={targetWeight ?? 0}
                 />
             </div>
 
