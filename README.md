@@ -1,0 +1,391 @@
+# 体重管理
+
+## 概要
+日々の体重データを登録・管理できるほか、月別平均体重の可視化や目標体重の管理、AIによる体重推移の分析機能を提供します。
+
+- JWT認証によるログイン機能
+- 体重・体脂肪率の記録
+- 体重記録の一覧表示
+- 月別平均体重の集計
+- グラフによる体重推移の可視化
+- 身長・目標体重の管理
+- Gemini APIを利用した体重推移のAI分析
+- Swagger(OpenAPI)によるAPIドキュメント
+
+## 使用技術
+
+### Frontend
+
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- Recharts
+
+### Backend
+
+- Django
+- Django REST Framework
+- Simple JWT
+
+### Database
+
+- PostgreSQL
+
+### Infrastructure
+
+- Docker
+- Docker Compose
+
+### External Service
+
+- Google Gemini API
+
+## システム構成図
+```mermaid
+flowchart TD
+
+    User[User]
+
+    subgraph Frontend
+        Login[Login Page]
+        Diary[Weight Management]
+        Chart[Statistics Chart]
+        Analysis[AI Analysis]
+    end
+
+    subgraph Backend
+        JWT[JWT Authentication]
+        DiaryAPI[Diary API]
+        HeightAPI[Height API]
+        StatsAPI[Monthly Average API]
+        AIAPI[AI Analysis API]
+    end
+
+    subgraph DB
+        UserTable[(User)]
+        DiaryTable[(Diary)]
+        HeightTable[(HeightMonthly)]
+    end
+
+    subgraph External Service
+        Gemini[Google Gemini API]
+    end
+
+    User --> Login
+    User --> Diary
+    User --> Chart
+    User --> Analysis
+
+    Login --> JWT
+
+    Diary --> DiaryAPI
+    Chart --> StatsAPI
+    Analysis --> AIAPI
+
+    DiaryAPI --> DiaryTable
+    HeightAPI --> HeightTable
+    JWT --> UserTable
+
+    AIAPI --> Gemini
+```
+
+## ER図
+```mermaid
+erDiagram
+
+    User ||--o{ Diary : records
+    User ||--o{ HeightMonthly : manages
+
+    User {
+        int id PK
+        string username
+        string email
+        datetime date_joined
+    }
+
+    Diary {
+        uuid id PK
+        int user_id FK
+        decimal weight
+        decimal body_fat
+        string memo
+        date record_date
+        datetime created_at
+        datetime updated_at
+    }
+
+    HeightMonthly {
+        uuid id PK
+        int user_id FK
+        int year
+        int month
+        decimal height_cm
+        decimal target_weight
+    }
+```
+
+## API仕様
+
+### Login
+
+JWTアクセストークンを取得します。
+
+| Method | Endpoint |
+|----------|----------|
+| POST | `/api/token/` |
+
+#### Request
+
+```json
+{
+  "username": "testuser",
+  "password": "password"
+}
+```
+
+#### Response
+
+```json
+{
+  "access": "jwt_access_token",
+  "refresh": "jwt_refresh_token"
+}
+```
+
+---
+
+### Refresh Token
+
+| Method | Endpoint |
+|----------|----------|
+| POST | `/api/token/refresh/` |
+
+#### Request
+
+```json
+{
+  "refresh": "jwt_refresh_token"
+}
+```
+
+#### Response
+
+```json
+{
+  "access": "new_access_token"
+}
+```
+
+---
+
+### Current User
+
+| Method | Endpoint |
+|----------|----------|
+| GET | `/api/me/` |
+
+#### Header
+
+```http
+Authorization: Bearer {access_token}
+```
+
+---
+
+## Weight Records
+
+### Get Records
+
+体重記録一覧を取得します。
+
+| Method | Endpoint |
+|----------|----------|
+| GET | `/api/diary/` |
+
+#### Query Parameters
+
+| Parameter | Description |
+|------------|-------------|
+| year | 年で絞り込み |
+| month | 月で絞り込み |
+
+#### Example
+
+```http
+GET /api/diary/?year=2026&month=6
+```
+
+#### Response
+
+```json
+[
+  {
+    "id": "72ba310c-eaf5-4257-b4b4-c25600a38b59",
+    "weight": "65.3",
+    "body_fat": "18.5",
+    "memo": "ランニング",
+    "record_date": "2026-06-05"
+  }
+]
+```
+
+---
+
+### Create Record
+
+| Method | Endpoint |
+|----------|----------|
+| POST | `/api/diary/` |
+
+#### Request
+
+```json
+{
+  "weight": "65.3",
+  "body_fat": "18.5",
+  "memo": "ランニング",
+  "record_date": "2026-06-05"
+}
+```
+
+---
+
+### Update Record
+
+| Method | Endpoint |
+|----------|----------|
+| PUT | `/api/diary/{id}/` |
+
+---
+
+### Delete Record
+
+| Method | Endpoint |
+|----------|----------|
+| DELETE | `/api/diary/{id}/` |
+
+---
+
+## Monthly Statistics
+
+### Monthly Average Weight
+
+月ごとの平均体重を取得します。
+
+| Method | Endpoint |
+|----------|----------|
+| GET | `/api/diary/monthly-averages/` |
+
+#### Response
+
+```json
+[
+  {
+    "month": "2026-06",
+    "average_weight": 65.2
+  }
+]
+```
+
+---
+
+## Height Management
+
+### Get Height Records
+
+| Method | Endpoint |
+|----------|----------|
+| GET | `/api/height-monthly/` |
+
+#### Query Parameters
+
+| Parameter | Description |
+|------------|-------------|
+| year | 年で絞り込み |
+
+---
+
+### Create Height Record
+
+| Method | Endpoint |
+|----------|----------|
+| POST | `/api/height-monthly/` |
+
+#### Request
+
+```json
+{
+  "year": 2026,
+  "month": 6,
+  "height_cm": "170.5",
+  "target_weight": "63.0"
+}
+```
+
+---
+
+### Latest Height Information
+
+最新の身長・目標体重を取得します。
+
+| Method | Endpoint |
+|----------|----------|
+| GET | `/api/height-monthly/latest/` |
+
+#### Response
+
+```json
+{
+  "year": 2026,
+  "month": 6,
+  "height_cm": "170.5",
+  "target_weight": "63.0"
+}
+```
+
+---
+
+## AI Analysis
+
+### Analyze Weight Trends
+
+体重推移を Gemini API によって分析します。
+
+| Method | Endpoint |
+|----------|----------|
+| GET | `/api/ai-analysis/` |
+
+#### Response
+
+```json
+{
+  "analysis": "先月比で0.8kg減少しています。順調に推移しています。"
+}
+```
+
+---
+
+## Authorization
+
+認証が必要なAPIでは以下のヘッダーを指定します。
+
+```http
+Authorization: Bearer {access_token}
+```
+
+---
+
+## Interactive API Documentation
+
+Swagger UI
+
+```text
+http://localhost:8000/api/docs/
+```
+
+OpenAPI Schema
+
+```text
+http://localhost:8000/api/schema/
+```

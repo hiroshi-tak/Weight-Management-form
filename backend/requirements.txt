@@ -1,0 +1,10 @@
+Django
+psycopg2-binary
+djangorestframework
+django-debug-toolbar
+django-cors-headers==3.11.0
+djangorestframework-simplejwt
+gunicorn==20.1.0
+google-generativeai
+drf-spectacular
+coverage
