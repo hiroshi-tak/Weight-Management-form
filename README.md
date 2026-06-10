@@ -12,6 +12,57 @@
 - Gemini APIを利用した体重推移のAI分析
 - Swagger(OpenAPI)によるAPIドキュメント
 
+## 環境構築
+1. git clone git@github.com:hiroshi-tak/Weight-Management-form.git
+2. cp .env.example .env.dev
+   * GEMINI_API_KEYを設定
+3. docker compose up --build 
+4. docker compose exec backend python manage.py migrate
+5. docker compose exec backend python manage.py create_users
+6. docker compose exec backend python manage.py create_height_dummy
+7. docker compose exec backend python manage.py create_weight_dummy
+
+## CI/CD
+GitHub Actionsを使用し、以下を自動実行しています。
+
+- backend: Djangoテスト（manage.py test）
+- frontend: lint（ESLint）
+
+## Load Test (k6)
+ローカル環境でk6を用いてAPI負荷テストを実施しました。
+(tests/load/diary.js)
+
+### 実施条件
+- VUs: 50
+- 対象: ログイン / 体重登録API / 取得API
+- 実行環境: ローカル Docker 環境
+
+### 結果サマリー
+
+| 指標 | 値 |
+|------|----|
+| 成功率 | 100% |
+| エラー率 | 0% |
+| リクエスト数 | 1587 |
+| 平均応答時間 | 520ms |
+| p95応答時間 | 1.27s |
+| 最大応答時間 | 1.81s |
+
+### 評価
+
+- エラー率0%のため安定稼働
+- 平均520msで許容範囲内
+- p95が1.27sのためピーク時はやや遅延あり
+- 50VUsでは問題なく処理可能
+
+## ユーザー登録
+* ユーザー名：test1
+* パスワード：12345678
+
+## DBリセット
+1. docker compose down -v
+2. docker compose up --build
+
 ## 使用技術
 
 ### Frontend
