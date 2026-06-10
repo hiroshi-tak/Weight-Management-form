@@ -61,8 +61,8 @@ export default function WeightChart({ data, targetWeight }: Props) {
             />
 
             <Tooltip
-                labelFormatter={(label: string | number) => {
-                    const d = new Date(label);
+                labelFormatter={(label: React.ReactNode) => {
+                    const d = new Date(String(label));
                     return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
                 }}
             />
