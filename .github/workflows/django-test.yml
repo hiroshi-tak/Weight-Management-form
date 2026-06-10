@@ -29,7 +29,12 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
+          pip install coverage
 
-      - name: Run Tests
+      - name: Run Tests with Coverage
         run: |
-          python manage.py test
+          coverage run manage.py test
+
+      - name: Coverage Report
+        run: |
+          coverage report
