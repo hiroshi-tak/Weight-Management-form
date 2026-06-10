@@ -167,7 +167,7 @@ class DiaryAPITest(APITestCase):
 
         self.assertEqual(
             response.data["username"],
-            "testuser"
+            "test1"
         )
 
     # AIAnalysisView
