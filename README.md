@@ -94,51 +94,30 @@ GitHub Actionsを使用し、以下を自動実行しています。
 
 ## システム構成図
 ```mermaid
-flowchart TD
+flowchart LR
 
     User[User]
 
     subgraph Frontend
-        Login[Login Page]
-        Diary[Weight Management]
-        Chart[Statistics Chart]
-        Analysis[AI Analysis]
+        NextJS[Next.js]
     end
 
     subgraph Backend
-        JWT[JWT Authentication]
-        DiaryAPI[Diary API]
-        HeightAPI[Height API]
-        StatsAPI[Monthly Average API]
-        AIAPI[AI Analysis API]
+        Django[Django REST Framework]
     end
 
-    subgraph DB
-        UserTable[(User)]
-        DiaryTable[(Diary)]
-        HeightTable[(HeightMonthly)]
+    subgraph Database
+        PostgreSQL[(PostgreSQL)]
     end
 
-    subgraph External Service
+    subgraph External
         Gemini[Google Gemini API]
     end
 
-    User --> Login
-    User --> Diary
-    User --> Chart
-    User --> Analysis
-
-    Login --> JWT
-
-    Diary --> DiaryAPI
-    Chart --> StatsAPI
-    Analysis --> AIAPI
-
-    DiaryAPI --> DiaryTable
-    HeightAPI --> HeightTable
-    JWT --> UserTable
-
-    AIAPI --> Gemini
+    User --> NextJS
+    NextJS --> Django
+    Django --> PostgreSQL
+    Django --> Gemini
 ```
 
 ## ER図
@@ -175,6 +154,138 @@ erDiagram
         decimal target_weight
     }
 ```
+
+## シーケンス図
+
+### ログイン(JWT認証)
+```mermaid
+sequenceDiagram
+
+    actor User
+    participant Frontend as Next.js
+    participant Backend as Django API
+
+    User->>Frontend: ユーザー名・パスワード入力
+
+    Frontend->>Backend: POST /api/token/
+
+    Backend->>Backend: 認証処理
+
+    Backend-->>Frontend: access token
+
+    Frontend->>Frontend: localStorage保存
+
+    Frontend-->>User: ログイン成功
+```
+
+### 体重登録
+```mermaid
+sequenceDiagram
+
+    actor User
+    participant Frontend as Next.js
+    participant Backend as Django API
+    participant DB as PostgreSQL
+
+    User->>Frontend: 体重入力
+
+    Frontend->>Backend: POST /api/diary/
+    Note over Frontend,Backend: Authorization: Bearer JWT
+
+    Backend->>Backend: JWT認証
+
+    Backend->>DB: INSERT Diary
+
+    DB-->>Backend: 登録完了
+
+    Backend-->>Frontend: 201 Created
+
+    Frontend-->>User: 登録成功
+```
+
+### 体重取得
+```mermaid
+sequenceDiagram
+
+    actor User
+    participant Frontend as Next.js
+    participant Backend as Django API
+    participant DB as PostgreSQL
+
+    User->>Frontend: 体重管理画面表示
+
+    Frontend->>Backend: GET /api/diary/?year=2026&month=6
+    Note over Frontend,Backend: Authorization: Bearer JWT
+
+    Backend->>Backend: JWT認証
+
+    Backend->>DB: Diary検索(user, month)
+
+    DB-->>Backend: 体重一覧データ
+
+    Backend-->>Frontend: JSONレスポンス
+
+    Frontend-->>User: 一覧表示
+```
+
+### AI分析
+```mermaid
+sequenceDiagram
+
+    actor User
+    participant Frontend as Next.js
+    participant Backend as Django API
+    participant DB as PostgreSQL
+    participant Gemini as Google Gemini API
+
+    User->>Frontend: AI分析実行
+
+    Frontend->>Backend: POST /api/ai-analysis/
+    Note over Frontend,Backend: Authorization: Bearer JWT
+
+    Backend->>Backend: JWT認証
+
+    Backend->>DB: 体重履歴取得
+
+    DB-->>Backend: 体重データ
+
+    Backend->>Gemini: 分析依頼
+
+    Gemini-->>Backend: 分析結果
+
+    Backend-->>Frontend: 分析結果
+
+    Frontend-->>User: 分析表示
+```
+
+### 月別平均体重
+```mermaid
+sequenceDiagram
+
+    actor User
+    participant Frontend as Next.js
+    participant Backend as Django API
+    participant DB as PostgreSQL
+
+    User->>Frontend: グラフ画面表示
+
+    Frontend->>Backend: GET /api/diary/monthly-averages/?year=2026
+    Note over Frontend,Backend: Authorization: Bearer JWT
+
+    Backend->>Backend: JWT認証
+
+    loop 1月～12月
+        Backend->>DB: AVG(weight)取得(month=n)
+        DB-->>Backend: 月平均体重
+    end
+
+    Backend->>Backend: 月別データ作成
+
+    Backend-->>Frontend: JSONレスポンス
+
+    Frontend-->>User: グラフ表示
+```
+###
 
 ## API仕様
 
